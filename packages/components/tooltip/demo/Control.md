@@ -2,7 +2,7 @@
 title:
   zh: 双向绑定
   en: Two-way binding
-order: 4
+order: 3
 ---
 
 ## zh

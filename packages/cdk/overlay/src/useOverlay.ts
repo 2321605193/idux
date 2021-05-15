@@ -8,7 +8,7 @@ import type {
   OverlayTriggerEvents,
 } from './types'
 
-import { computed, getCurrentInstance, onUnmounted, reactive, ref, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import domAlign from 'dom-align'
 import throttle from 'lodash/throttle'
 import { off, on } from '@idux/cdk/utils'
@@ -24,11 +24,14 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
   let visibleTimer: number | null = null
   let visibilityWatchHandler: WatchStopHandle
   let placementWatchHandler: WatchStopHandle
+  let skipEvent = true
 
   const triggerRef: Ref = ref<TE | null>(null)
   const overlayRef: Ref = ref<OE | null>(null)
 
-  const visibility = computed(() => !state.disabled && state.visible)
+  const visibility = computed(() => {
+    return !state.disabled && state.visible
+  })
 
   const placement = computed(() => state.placement)
 
@@ -42,7 +45,6 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
     if (!triggerElement || !overlayElement) {
       return
     }
-
     initOverlay(overlayElement, triggerElement)
   }
 
@@ -133,6 +135,10 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
     event.stopPropagation()
     switch (event.type) {
       case 'mouseenter':
+        if (visibleTimer) {
+          clearTimeout(visibleTimer)
+          visibleTimer = null
+        }
         show()
         break
       case 'mouseleave':
@@ -173,7 +179,9 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
    * @private
    */
   function watchVisibility(): void {
-    visibilityWatchHandler = watch(visibility, initialize, { flush: 'post' })
+    visibilityWatchHandler = watch(visibility, () => {
+      nextTick(initialize) // Compatible with v-show
+    })
   }
 
   /**
@@ -187,6 +195,10 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
    * @private
    */
   const globalScroll = throttle((event: Event) => {
+    if (skipEvent) {
+      skipEvent = false
+      return
+    }
     if (!visibility.value) {
       return
     }
@@ -196,6 +208,7 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
     if (state.scrollStrategy === 'none') {
       return
     } else if (state.scrollStrategy === 'close') {
+      // todo prevent first event
       hide(0)
     } else {
       const triggerElement = convertElement(triggerRef).value
@@ -217,7 +230,7 @@ export const useOverlay = <TE extends OverlayElement = OverlayElement, OE extend
    * @private
    */
   function watchPlacement() {
-    placementWatchHandler = watch(() => state.placement, initialize, { flush: 'pre' })
+    placementWatchHandler = watch(() => state.placement, initialize, { flush: 'post' })
   }
 
   watchVisibility()

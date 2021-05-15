@@ -2,7 +2,7 @@
 title:
   zh: 隐藏时销毁
   en: Destroy on hide
-order: 3
+order: 2
 ---
 
 ## zh
@@ -11,4 +11,4 @@ order: 3
 
 ## en
 
-Overlay is destroyed on hide.
+Tooltip is destroyed when hidden.

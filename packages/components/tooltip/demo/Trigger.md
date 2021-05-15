@@ -1,7 +1,7 @@
 ---
 title:
   zh: 三种触发方式
-  en: Three ways to trigger
+  en: Trigger
 order: 1
 ---
 
@@ -11,4 +11,4 @@ order: 1
 
 ## en
 
-Mouse in, focus, click.
+hover, focus, click.
